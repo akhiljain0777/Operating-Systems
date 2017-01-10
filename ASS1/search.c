@@ -10,13 +10,53 @@
 int main(){
 	char f[mx];
 	FILE *fp;
-	int i=0,n,A[mx];
-	scanf("%s",f);
+	int i=0,n,A[mx],id,tmp,status1=0,status2=0,start,finish,k;
+	printf("Enter a file name\n");
+	strcpy(f,"test.txt");
+	//scanf("%s",f);
 	fp=fopen(f,"r");
 	while(fscanf(fp,"%d",&A[i])!=EOF)i++;
 	n=i;
+	printf("Enter k\n");
+	scanf("%d",&k);
+	fclose(fp);
+	tmp=n;
 	for(i=0;i<n;i++)printf("%d ",A[i]);
 	printf("\n");
-	// fscanf(fp, "%s %s %s %d", str1, str2, str3, &year);
+	start=0;
+	finish=n;
+	while(n>10){
+		id=fork();
+		if(id==0){
+			if(status2)exit(1);
+			finish-=(n-n/2);
+			n=n/2;
+		}
+		else{
+			wait(&status1);
+			id=fork();
+			if(id==0){
+				if(status1)exit(1);
+				start+=n/2;
+				n-=n/2;
+			}
+			else wait(&status2);
+		}
+		if(tmp==n )break;
+		if(status1 || status2)exit(1); 
+	}
+	if(!status1 && !status2 && n<10){
+		for(i=start;i<finish;i++){
+			if(A[i]==k){
+				if(tmp!=n)exit(1);
+				status1=status2=1;
+			}
+		}
+		if(tmp!=n)exit(0);
+	}
+	if(tmp==n){
+		if(status1 || status2)printf("Found\n");
+		else printf("Not Found\n");
+	}
 	return 0;
 }
