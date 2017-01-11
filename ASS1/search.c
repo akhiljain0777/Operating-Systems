@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define mx 100
+#define mx 1000
 
 int main(){
 	char f[mx];
@@ -20,8 +20,6 @@ int main(){
 	scanf("%d",&k);
 	fclose(fp);
 	tmp=n;
-	for(i=0;i<n;i++)printf("%d ",A[i]);
-	printf("\n");
 	start=0;
 	finish=n;
 	int flag;
@@ -58,8 +56,8 @@ int main(){
 		if(tmp!=n)exit(0);
 	}
 	if(tmp==n){
-		if(status1 || status2)printf("Found\n");
-		else printf("Not Found\n");
+		if(status1 || status2)printf("\nFound\n");
+		else printf("\nNot Found\n");
 	}
 	return 0;
 }
