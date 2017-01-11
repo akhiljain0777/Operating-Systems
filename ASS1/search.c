@@ -18,6 +18,7 @@ int main(){
 	n=i;
 	printf("\nEnter k\n");
 	scanf("%d",&k);
+	if(k<=0)return 0;
 	fclose(fp);
 	tmp=n;
 	start=0;
