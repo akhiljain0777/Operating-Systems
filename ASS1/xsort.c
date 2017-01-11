@@ -1,0 +1,21 @@
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+
+
+#define mx 100
+
+int main(int argc,char *argv[]){
+	char *parameters[3];
+	parameters[0]=(char *)malloc(100*sizeof(char));
+	parameters[1]=(char *)malloc(100*sizeof(char));
+	strcpy(parameters[0],"./sort1");
+	strcpy(parameters[1],argv[1]);
+	parameters[2]=NULL;
+	execvp("./sort1",parameters);
+	perror("execvp failed");
+	return 0;
+}
