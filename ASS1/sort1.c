@@ -18,9 +18,9 @@ int main(int argc,char*argv[]){
 	FILE *fp;
 	int A[mx],i,j,n;
 	fp=fopen(argv[1],"r");
-	while(fscanf(fp,"%d",&A[i])!=EOF)i++;
-	n=i;
-	for(i=n-1;i>=0;i--){
+	while(fscanf(fp,"%d",&A[i])!=EOF)i++; // Scanning integers from the file
+	n=i; // n stores number of elements 
+	for(i=n-1;i>=0;i--){ /*Bubble sort*/
 		for(j=1;j<=i;j++){
 			if(A[j]<A[j-1])swap(&A[j-1],&A[j]);
 		}

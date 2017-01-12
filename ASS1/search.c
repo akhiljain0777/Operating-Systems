@@ -14,44 +14,43 @@ int main(){
 	printf("Enter a file name\n");
 	scanf("%s",f);
 	fp=fopen(f,"r");
-	while(fscanf(fp,"%d",&A[i])!=EOF)i++;
-	n=i;
+	while(fscanf(fp,"%d",&A[i])!=EOF)i++; // Scanning integers from the file
+	n=i; // n stores number of elements 
 	printf("\nEnter k\n");
 	scanf("%d",&k);
-	if(k<=0)return 0;
+	if(k<=0)return 0; // For k<=0 terminate the program
 	fclose(fp);
 	tmp=n;
-	start=0;
-	finish=n;
+	start=0;   // start refers to the starting index of a partition for a child 
+	finish=n; // (Finish-1) refers to the index of last element of a partition for a child
 	int flag;
 	while(n>10){
 		flag=0;
 		id=fork();
-		if(id==0){
-			if(status2 || status1)exit(1);
-			finish-=(n-n/2);
-			n=n/2;
+		if(id==0){ /* First Child */
+			if(status2 || status1)exit(1); /* If already found*/
+			finish-=(n-n/2);  /* Updating finish for 1st child */
+			n=n/2; /* 1st partition*/
 		}
 		else{
-			wait(&status1);
+			wait(&status1); /* Wait for first child to finish*/
 			id=fork();
-			if(id==0){
-				if(status1 || status2)exit(1);
-				start+=n/2;
-				n-=n/2;
+			if(id==0){  /* Second child*/
+				if(status1 || status2)exit(1);/* If already found*/
+				start+=n/2;/* Updating 2nd for 1st child */
+				n-=n/2; /* 2nd partition*/
 			}
-			else {wait(&status2);flag=1;}
+			else {wait(&status2);flag=1;}/*if flag=1 then both childs are finished*/
 		}
-		if(tmp==n )break;
-		if(status1 || status2)exit(1);
-		if(flag)exit(0);
-	//	printf("n=%d start=%d finish=%d pid=%d\n",n,start,finish,getpid()); 
+		if(tmp==n )break;/* If root process then break*/
+		if(status1 || status2)exit(1);/*If element is found*/
+		if(flag)exit(0); /*Element not found in both partitions */
 	}
 	if(!status1 && !status2 && n<=10){
 		for(i=start;i<finish;i++){
 			if(A[i]==k){
-				if(tmp!=n){exit(1);}
-				status1=status2=1;
+				if(tmp!=n){exit(1);} 
+				status1=status2=1; /* If root process then don't exit*/
 			}
 		}
 		if(tmp!=n)exit(0);
