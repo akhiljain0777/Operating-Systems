@@ -16,7 +16,7 @@ void swap(int *x,int *y){
 
 int main(int argc,char*argv[]){
 	FILE *fp;
-	int A[mx],i,j,n;
+	int A[mx],i=0,j,n;
 	fp=fopen(argv[1],"r");
 	while(fscanf(fp,"%d",&A[i])!=EOF)i++; // Scanning integers from the file
 	n=i; // n stores number of elements 
