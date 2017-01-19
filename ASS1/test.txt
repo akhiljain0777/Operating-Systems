@@ -1,1 +1,12 @@
 1 9 0 1 2 6 100 97
+
+SELECT * FROM(SELECT MAX(Y.ct) as mx  FROM (SELECT count(x.grade) AS ct FROM (SELECT ALL student.sid,enrolled.grade FROM student,enrolled WHERE enrolled.grade="EX" AND enrolled.sid=student.sid) AS x GROUP BY x.sid) AS Y) as Z WHERE  mx=Y.ct  ;
+
+
+
+	 SELECT tb2.sid,tb2.name
+	 FROM (SELECT tb1.sid,tb1.name,COUNT(tb1.grade) as cnt
+	       FROM (SELECT ALL student.sid,student.name,enrolled.grade FROM student,enrolled WHERE enrolled.grade="EX" AND enrolled.sid=student.sid) as tb1
+           GROUP BY tb1.sid) as tb2
+
+     WHERE tb2.cnt>=(SELECT MAX(tb2_.cnt2)  FROM (SELECT tb1_.sid,COUNT(tb1_.grade) as cnt2       FROM (SELECT ALL student.sid,enrolled.grade FROM student,enrolled WHERE enrolled.grade="EX" AND enrolled.sid=student.sid) as tb1_            GROUP BY tb1_.sid) as tb2_);
