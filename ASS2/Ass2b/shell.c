@@ -134,11 +134,11 @@ void fcpy(char * argv[]){
 			write(filedes2,buff,bytes); // writing to file 2
 			if(bytes<0){
 				write(ret[1],"-1",2);
-				return;	
+				exit(-1);	
 			}
 			else if(bytes<100){
 				write(ret[1],"0",2); // sending acknowledgement
-				return; 
+				exit(0); 
 			}
 			else write(ret[1],"0",2); // sending acknowledgement
 		}
@@ -157,11 +157,10 @@ void cp_(){
 	}
 	strcpy(file1,tmp);
 	strcpy(file2,tmp2);
-	printf("\nFile1=%s File2=%s",file1,file2);
 	struct stat filestat1,filestat2;
 	stat(file1,&filestat1);
 	stat(file2,&filestat2);
-	if(filestat1.st_mtime > filestat2.st_mtime){
+	if(filestat1.st_mtime > filestat2.st_mtime ){
 		char *argv[3];
 		argv[0]=(char *)malloc(mx*sizeof(char));
 		argv[1]=(char *)malloc(mx*sizeof(char));
@@ -172,8 +171,9 @@ void cp_(){
 		fcpy(argv);
 	}
 	else{
-		printf("Kyu\n");
+		printf("File 2 was modified later than file1\n");
 	}
+	return;
 }
 
 void shell(){
@@ -188,6 +188,7 @@ void shell(){
 		else if(!strcmp(in,"ls"))ls_();
 		else if(!strcmp(in,"cp"))cp_();
 		else if(!strcmp(in,"exit"))exit(0);
+		fflush(stdout);
 
 	}
 }
