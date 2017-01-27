@@ -7,6 +7,8 @@
 #include <sys/types.h>
 #include <time.h>
 #include <fcntl.h>
+#include <sys/wait.h>
+
 #define mx 500
 #define BUFSIZE 100
 char currD[500],in[500],path[mx],tmp[mx];
@@ -177,9 +179,13 @@ void cp_(){
 }
 
 void shell(){
+	char *argv[2];
 	while(1){
 		printf("%s>",getcwd(currD,100));
 		scanf (" %[^\n]",tmp); 
+		argv[0]=(char *)malloc(mx*sizeof(char));
+		strcpy(argv[0],tmp);
+		argv[1]=NULL;
 		strcpy(in,strtok(tmp," "));
 		if(!strcmp(in,"cd"))cd_();
 		else if(!strcmp(in,"pwd"))pwd_();
@@ -188,8 +194,14 @@ void shell(){
 		else if(!strcmp(in,"ls"))ls_();
 		else if(!strcmp(in,"cp"))cp_();
 		else if(!strcmp(in,"exit"))exit(0);
-		fflush(stdout);
-
+		else{
+			int id=fork();
+			if(id==0){
+				if(argv[0][strlen(argv[0])-1]=='&')argv[0][strlen(argv[0])-1]='\0';
+				execlp("/usr/bin/xterm","/usr/bin/xterm","-hold","-e",argv[0],argv[1],(char*)NULL);
+			}
+			else if(argv[0][strlen(argv[0])-1]!='&') wait(NULL);
+		}
 	}
 }
 
