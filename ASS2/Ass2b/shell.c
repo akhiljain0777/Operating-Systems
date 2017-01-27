@@ -178,6 +178,79 @@ void cp_(){
 	return;
 }
 
+
+void execute_(char *argv[]){
+	int id,ifd,ofd;
+	int i,j,k;
+	char file1[mx],file2[mx];
+	int flag1=0,flag2=0;
+	id=fork();
+	if(id==0){
+		i=0;
+		if(argv[0][strlen(argv[0])-1]=='&')argv[0][strlen(argv[0])-1]='\0';
+		while(argv[0][i]!='\0'){
+			if(argv[0][i]=='<'){
+				flag1=1;
+				argv[0][i]='\0';
+				i++;
+				while(argv[0][i]==' ' && argv[0][i]!='\0')i++;
+					j=i;
+					while(argv[0][j]!=' ' && argv[0][j]!='\0' && argv[0][j]!='>')j++;
+						for(k=i;k<j;k++){
+							file1[k-i]=argv[0][k];
+						}
+						file1[j-i]='\0';
+						i=j-1;
+					}
+					if(argv[0][i]=='>'){
+						flag2=1;
+						argv[0][i]='\0';
+						i++;
+						while(argv[0][i]==' ' && argv[0][i]!='\0')i++;
+						j=i;
+						while(argv[0][j]!=' ' && argv[0][j]!='\0' && argv[0][j]!='<')j++;
+						for(k=i;k<j;k++){
+							file2[k-i]=argv[0][k];
+						}
+						file2[j-i]='\0';
+						i=j-1;
+					}
+					i++;
+				}
+				if(flag1==1){
+					ifd=open(file1, O_RDONLY);
+					if(ifd<0){
+						perror("");
+					}
+					else{
+						close(0);
+						dup(ifd);
+						close(ifd);	
+					}
+				}
+				if(flag2==1){
+					ofd=open(file2,O_CREAT|O_WRONLY|O_TRUNC,S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
+					if(ofd<0){
+						perror("");
+					}
+					else{
+						close(1);
+						dup(ofd);
+						close(ofd);	
+					}
+				}
+				i=0;
+				while(argv[0][i]!=' ' && argv[0][i]!='<' && argv[0][i]!='>' && argv[0][i]!='\0')i++;
+				char comm[mx];
+				for(j=0;j<i;j++)comm[j]=argv[0][j];
+				comm[i]='\0';
+				execvp(comm,argv);
+				perror("execlp failed");
+	}
+	else if(argv[0][strlen(argv[0])-1]!='&') wait(NULL);
+}
+
+
 void shell(){
 	char *argv[2];
 	while(1){
@@ -194,14 +267,7 @@ void shell(){
 		else if(!strcmp(in,"ls"))ls_();
 		else if(!strcmp(in,"cp"))cp_();
 		else if(!strcmp(in,"exit"))exit(0);
-		else{
-			int id=fork();
-			if(id==0){
-				if(argv[0][strlen(argv[0])-1]=='&')argv[0][strlen(argv[0])-1]='\0';
-				execlp("/usr/bin/xterm","/usr/bin/xterm","-hold","-e",argv[0],argv[1],(char*)NULL);
-			}
-			else if(argv[0][strlen(argv[0])-1]!='&') wait(NULL);
-		}
+		else execute_(argv);
 	}
 }
 
