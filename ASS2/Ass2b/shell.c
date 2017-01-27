@@ -244,7 +244,11 @@ void execute_(char *argv[]){
 				char comm[mx];
 				for(j=0;j<i;j++)comm[j]=argv[0][j];
 				comm[i]='\0';
-				execvp(comm,argv);
+				char *params[mx];
+				params[0]=strtok(argv[0]," ");
+				i=1;
+				while((params[i++]=strtok(NULL," "))!=NULL);
+				execvp(comm,params);
 				perror("execlp failed");
 	}
 	else if(argv[0][strlen(argv[0])-1]!='&') wait(NULL);
