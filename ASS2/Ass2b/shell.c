@@ -183,12 +183,17 @@ void cp_(){
 }
 
 void piping(char* argv[]){
-	int id,fd[2];
+	int id,fd[2],fd2[2];
 	char *out1,*out2,*out3;
 	pipe(fd);
+	pipe(fd2);
 	out1=strtok(argv[0]," |");
 	out2=strtok(NULL," |");
 	out3=strtok(NULL," |");
+	if(out2==NULL){
+		printf("Incorrect format\n");
+		return;
+	}
 	id=fork();
 	if(id==0){
 		close(1);
@@ -207,6 +212,11 @@ void piping(char* argv[]){
 			close(0);
 			close(fd[1]);
 			dup(fd[0]);
+			if(out3!=NULL){
+				close(1);
+				close(fd2[0]);
+				dup(fd2[1]);
+			}
 			char *pms[2];
 			pms[0]=(char *)malloc(sizeof(char)*mx);
 			strcpy(pms[0],out2);
@@ -214,8 +224,21 @@ void piping(char* argv[]){
 				execvp(out2,pms);
 				perror("");
 		}
-		else wait(NULL);
-
+		else {
+			wait(NULL);
+			if(fork()==0){
+				close(0);
+				close(fd2[1]);
+				dup(fd2[0]);
+				char *pms[2];
+				pms[0]=(char *)malloc(sizeof(char)*mx);
+				strcpy(pms[0],out3);
+				pms[1]=NULL;
+				execvp(out3,pms);
+				perror("");		
+			}
+			else wait(NULL);
+		}
 
 	}
 }
