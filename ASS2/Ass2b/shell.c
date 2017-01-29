@@ -8,7 +8,7 @@
 #include <time.h>
 #include <fcntl.h>
 #include <sys/wait.h>
-
+#include <pwd.h>
 #define mx 500
 #define BUFSIZE 100
 char currD[500],in[500],path[mx],tmp[mx];
@@ -18,7 +18,11 @@ char currD[500],in[500],path[mx],tmp[mx];
 void cd_(){
 	char* tmp=strtok(NULL," ");
 	if(tmp==NULL){
-		printf("Name of Directory missing\n");
+		struct passwd *pw = getpwuid(getuid());
+		const char *homedir = pw->pw_dir;
+		int status=chdir(homedir);
+		if(status==-1)perror("chdir failed");
+
 	}
 	else{
 		strcpy(path,tmp);
@@ -178,12 +182,59 @@ void cp_(){
 	return;
 }
 
+void piping(char* argv[]){
+	int id,fd[2];
+	char *out1,*out2,*out3;
+	pipe(fd);
+	out1=strtok(argv[0]," |");
+	out2=strtok(NULL," |");
+	out3=strtok(NULL," |");
+	id=fork();
+	if(id==0){
+		close(1);
+		close(fd[0]);
+		dup(fd[1]);
+		char *pms[2];
+		pms[0]=(char *)malloc(sizeof(char)*mx);
+		strcpy(pms[0],out1);
+		pms[1]=NULL;
+		execvp(out1,pms);
+		perror("");
+	}
+	else{
+		wait(NULL);
+		if(fork()==0){
+			close(0);
+			close(fd[1]);
+			dup(fd[0]);
+			char *pms[2];
+			pms[0]=(char *)malloc(sizeof(char)*mx);
+			strcpy(pms[0],out2);
+			pms[1]=NULL;
+				execvp(out2,pms);
+				perror("");
+		}
+		else wait(NULL);
+
+
+	}
+}
+
 
 void execute_(char *argv[]){
 	int id,ifd,ofd;
 	int i,j,k;
 	char file1[mx],file2[mx];
 	int flag1=0,flag2=0;
+	char temp[mx],*temp2;
+	strcpy(temp,argv[0]);
+	temp2=strtok(temp,"|");
+	if(temp2!=NULL && strcmp(temp2,argv[0])){
+		piping(argv);
+		fflush(stdout);
+		return;
+	}
+	printf("Checkpt1\n");
 	id=fork();
 	if(id==0){
 		i=0;

@@ -14,7 +14,7 @@ int main(int argc,char* argv[]){
 	//printf("Enter a file name\n");
 	//scanf("%s",f);
 	fp=fopen(argv[1],"r");
-	while(fscanf(fp,"%d",&A[i])!=EOF)i++; // Scanning integers from the file
+	while(scanf(fp,"%d",&A[i])!=EOF)i++; // Scanning integers from the file
 	n=i; // n stores number of elements 
 	fclose(fp);
 	for(i=0;i<n;i++)printf("%d ",A[i]);
