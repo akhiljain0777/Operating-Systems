@@ -9,15 +9,17 @@
 #include <fcntl.h>
 #include <sys/wait.h>
 #include <pwd.h>
+
 #define mx 500
 #define BUFSIZE 100
+
 char currD[500],in[500],path[mx],tmp[mx];
 
 
 
-void cd_(){
+void cd_(){		// Basic chdir built in
 	char* tmp=strtok(NULL," ");
-	if(tmp==NULL){
+	if(tmp==NULL){	// If nothing specified return to home dir
 		struct passwd *pw = getpwuid(getuid());
 		const char *homedir = pw->pw_dir;
 		int status=chdir(homedir);
@@ -31,7 +33,7 @@ void cd_(){
 	}
 }
 
-void pwd_(){
+void pwd_(){	// Basic pwd built in
 	printf("%s\n",getcwd(currD,100));
 }
 
@@ -63,7 +65,7 @@ void rmdir_(){
 
 void ls_(){
 	char* tmp=strtok(NULL," ");
-	if(tmp!=NULL){
+	if(tmp!=NULL){	// for ls -l
 		DIR *dp;
 		struct dirent *sd; 
 		dp=opendir(currD);
@@ -92,7 +94,7 @@ void ls_(){
 
 		
 	}
-	else{
+	else{	//for ls
 		DIR *dp;
 		struct dirent *sd; 
 		dp=opendir(currD);
@@ -104,60 +106,13 @@ void ls_(){
 
 }
 
-void fcpy(char * argv[]){
-	int fd[2],id,filedes1,filedes2,ret[2]; //fd for reading/writing , ret for acknowledgement
-	char buff[200];
-	pipe(fd);   // pipe1
-	pipe(ret); //pipe2
-	filedes1=open(argv[1],O_RDONLY);
-	if(filedes1<0){
-		perror("Incorrect File1 name\n");
-		return;
-	}
-	filedes2=open(argv[2],O_TRUNC|O_WRONLY,S_IRUSR | S_IWUSR); /* If file not present,create. If present overwrite */
-	if(filedes2<0){
-		perror("Incorrect File2 name\n");
-		return;
-	}	
-	id=fork();
-	int bytes;
-	char a[10];
-	if(id!=0){   // parent proces
-		close(fd[0]);
-		while(1){
-			bytes=read(filedes1,buff,BUFSIZE); // reading from file 1
-			write(fd[1],buff,bytes);  // writing to pipe
-			read(ret[0],a,2);  // waiting for acknowledgement
-			if(a[0]=='-' && a[1]=='1')return;
-			if(a[0]=='0' && bytes<100)return;
-		}
-
-	}
-	else{
-		close(fd[1]);
-		while(1){
-			bytes=read(fd[0],buff,BUFSIZE); // reading from pipe
-			write(filedes2,buff,bytes); // writing to file 2
-			if(bytes<0){
-				write(ret[1],"-1",2);
-				exit(-1);	
-			}
-			else if(bytes<100){
-				write(ret[1],"0",2); // sending acknowledgement
-				exit(0); 
-			}
-			else write(ret[1],"0",2); // sending acknowledgement
-		}
-	}
-
-}
 
 
-void cp_(){
+void cp_(){	// copy command
 	char file1[mx],file2[mx];
 	char* tmp=strtok(NULL," ");
 	char* tmp2=strtok(NULL," ");
-	if(tmp==NULL || tmp2==NULL){
+	if(tmp==NULL || tmp2==NULL){	// error handling
 		printf("cp requires two arguments\n");
 		return;
 	}
@@ -166,15 +121,25 @@ void cp_(){
 	struct stat filestat1,filestat2;
 	stat(file1,&filestat1);
 	stat(file2,&filestat2);
-	if(filestat1.st_mtime > filestat2.st_mtime ){
-		char *argv[3];
-		argv[0]=(char *)malloc(mx*sizeof(char));
-		argv[1]=(char *)malloc(mx*sizeof(char));
-		argv[2]=(char *)malloc(mx*sizeof(char));
-		strcpy(argv[0],file1);
-		strcpy(argv[1],file1);
-		strcpy(argv[2],file2);
-		fcpy(argv);
+	if(filestat1.st_mtime > filestat2.st_mtime ){	/* Only copy if file1's modified time is greater */ 
+		int filedes1=open(file1,O_RDONLY);
+		if(filedes1<0){
+			perror("Incorrect File1 name\n");
+			return;
+		}
+		int filedes2=open(file2,O_TRUNC|O_WRONLY,S_IRUSR | S_IWUSR);
+		if(filedes2<0){
+			perror("Incorrect File2 name\n");
+			return;
+		}
+		char buff[mx];
+		int bytes;
+		while((bytes=read(filedes1,buff,BUFSIZE))){	 /* Reading from file 1 and writing to file 2 */
+			if(bytes<0)break;
+			write(filedes2,buff,bytes);
+			if(bytes<BUFSIZE)break;
+		}
+
 	}
 	else{
 		printf("File 2 was modified later than file1\n");
@@ -182,13 +147,13 @@ void cp_(){
 	return;
 }
 
-void piping(char* argv[]){
+void piping(char* argv[]){	// function for piping eg a.out| b.out
 	int id,fd[2],fd2[2];
 	char *out1,*out2,*out3;
 	pipe(fd);
 	pipe(fd2);
-	out1=strtok(argv[0]," |");
-	out2=strtok(NULL," |");
+	out1=strtok(argv[0]," |");	// name of first executable
+	out2=strtok(NULL," |");		// name of second executable
 	out3=strtok(NULL," |");
 	if(out2==NULL){
 		printf("Incorrect format\n");
@@ -198,53 +163,58 @@ void piping(char* argv[]){
 	if(id==0){
 		close(1);
 		close(fd[0]);
-		dup(fd[1]);
+		dup(fd[1]);	// fd[1] to std out
 		char *pms[2];
 		pms[0]=(char *)malloc(sizeof(char)*mx);
 		strcpy(pms[0],out1);
 		pms[1]=NULL;
 		execvp(out1,pms);
 		perror("");
+		exit(0);
 	}
 	else{
 		wait(NULL);
 		if(fork()==0){
 			close(0);
 			close(fd[1]);
-			dup(fd[0]);
+			dup(fd[0]); // fd[0] to stdin
 			if(out3!=NULL){
 				close(1);
 				close(fd2[0]);
-				dup(fd2[1]);
+				dup(fd2[1]);// fd2[1] to stdout
 			}
 			char *pms[2];
 			pms[0]=(char *)malloc(sizeof(char)*mx);
 			strcpy(pms[0],out2);
 			pms[1]=NULL;
-				execvp(out2,pms);
-				perror("");
+			execvp(out2,pms);
+			perror("");
+			exit(0);
 		}
-		else {
+		else{
 			wait(NULL);
-			if(fork()==0){
-				close(0);
-				close(fd2[1]);
-				dup(fd2[0]);
-				char *pms[2];
-				pms[0]=(char *)malloc(sizeof(char)*mx);
-				strcpy(pms[0],out3);
-				pms[1]=NULL;
-				execvp(out3,pms);
-				perror("");		
+			if(out3!=NULL){
+				if(fork()==0){
+					close(0);
+					close(fd2[1]);
+					dup(fd2[0]); // fd2[0] to stdin
+					char *pms[2];
+					pms[0]=(char *)malloc(sizeof(char)*mx);
+					strcpy(pms[0],out3);
+					pms[1]=NULL;
+					execvp(out3,pms);
+					perror("");
+					exit(0);		
+				}
+				else wait(NULL);
 			}
-			else wait(NULL);
 		}
 
 	}
 }
 
 
-void execute_(char *argv[]){
+void execute_(char *argv[]){ /* runs executable files */
 	int id,ifd,ofd;
 	int i,j,k;
 	char file1[mx],file2[mx];
@@ -252,18 +222,17 @@ void execute_(char *argv[]){
 	char temp[mx],*temp2;
 	strcpy(temp,argv[0]);
 	temp2=strtok(temp,"|");
-	if(temp2!=NULL && strcmp(temp2,argv[0])){
+	if(temp2!=NULL && strcmp(temp2,argv[0])){ // if piping present 
 		piping(argv);
 		fflush(stdout);
 		return;
 	}
-	printf("Checkpt1\n");
 	id=fork();
 	if(id==0){
 		i=0;
 		if(argv[0][strlen(argv[0])-1]=='&')argv[0][strlen(argv[0])-1]='\0';
 		while(argv[0][i]!='\0'){
-			if(argv[0][i]=='<'){
+			if(argv[0][i]=='<'){	// extracting file 1 name
 				flag1=1;
 				argv[0][i]='\0';
 				i++;
@@ -275,23 +244,23 @@ void execute_(char *argv[]){
 						}
 						file1[j-i]='\0';
 						i=j-1;
+			}
+			if(argv[0][i]=='>'){
+				flag2=1;
+				argv[0][i]='\0';
+				i++;
+				while(argv[0][i]==' ' && argv[0][i]!='\0')i++;
+					j=i;
+					while(argv[0][j]!=' ' && argv[0][j]!='\0' && argv[0][j]!='<')j++;
+					for(k=i;k<j;k++){
+						file2[k-i]=argv[0][k];
 					}
-					if(argv[0][i]=='>'){
-						flag2=1;
-						argv[0][i]='\0';
-						i++;
-						while(argv[0][i]==' ' && argv[0][i]!='\0')i++;
-						j=i;
-						while(argv[0][j]!=' ' && argv[0][j]!='\0' && argv[0][j]!='<')j++;
-						for(k=i;k<j;k++){
-							file2[k-i]=argv[0][k];
-						}
-						file2[j-i]='\0';
-						i=j-1;
-					}
-					i++;
+					file2[j-i]='\0';
+					i=j-1;
 				}
-				if(flag1==1){
+					i++;
+			}
+				if(flag1==1){ //
 					ifd=open(file1, O_RDONLY);
 					if(ifd<0){
 						perror("");
@@ -322,8 +291,9 @@ void execute_(char *argv[]){
 				params[0]=strtok(argv[0]," ");
 				i=1;
 				while((params[i++]=strtok(NULL," "))!=NULL);
-				execvp(comm,params);
+				execvp(comm,params);	// for execution
 				perror("execlp failed");
+				exit(0);
 	}
 	else if(argv[0][strlen(argv[0])-1]!='&') wait(NULL);
 }

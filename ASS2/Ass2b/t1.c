@@ -3,6 +3,6 @@
 int main(){
 	int i;
 	scanf("%d",&i);
-	printf("%d\n",i*8);
-
+	printf("%d %d\n",i*3,i*2);
+	return 0;
 }

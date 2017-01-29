@@ -1,6 +1,1 @@
-testProb1.txt
-1
-6
-9
-997
-0
+kyu ki
