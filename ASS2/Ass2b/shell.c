@@ -150,6 +150,8 @@ void cp_(){	// copy command
 void piping(char* argv[]){	// function for piping eg a.out| b.out
 	int id,fd[2],fd2[2];
 	char *out1,*out2,*out3;
+	int flag=1;
+	if(argv[0][strlen(argv[0]-1)]=='&'){flag=0;argv[0][strlen(argv[0]-1)]='\0';}
 	pipe(fd);
 	pipe(fd2);
 	out1=strtok(argv[0]," |");	// name of first executable
@@ -173,7 +175,7 @@ void piping(char* argv[]){	// function for piping eg a.out| b.out
 		exit(0);
 	}
 	else{
-		wait(NULL);
+		if(flag)wait(NULL);
 		if(fork()==0){
 			close(0);
 			close(fd[1]);
@@ -192,7 +194,7 @@ void piping(char* argv[]){	// function for piping eg a.out| b.out
 			exit(0);
 		}
 		else{
-			wait(NULL);
+			if(flag)wait(NULL);
 			if(out3!=NULL){
 				if(fork()==0){
 					close(0);
@@ -206,7 +208,7 @@ void piping(char* argv[]){	// function for piping eg a.out| b.out
 					perror("");
 					exit(0);		
 				}
-				else wait(NULL);
+				else if(flag) wait(NULL);
 			}
 		}
 
