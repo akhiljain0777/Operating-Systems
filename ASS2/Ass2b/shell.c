@@ -148,15 +148,17 @@ void cp_(){	// copy command
 }
 
 void piping(char* argv[]){	// function for piping eg a.out| b.out
-	int id,fd[2],fd2[2];
+	int id,fd[2],fd2[2],i;
 	char *out1,*out2,*out3;
 	int flag=1;
+	char* pms[mx];
 	if(argv[0][strlen(argv[0]-1)]=='&'){flag=0;argv[0][strlen(argv[0]-1)]='\0';}
 	pipe(fd);
 	pipe(fd2);
-	out1=strtok(argv[0]," |");	// name of first executable
-	out2=strtok(NULL," |");		// name of second executable
-	out3=strtok(NULL," |");
+	out1=strtok(argv[0],"|");	// name of first executable
+	out2=strtok(NULL,"|");		// name of second executable
+	out3=strtok(NULL,"|");
+	//printf("out1=%s\nout2=%s\n",out1,out2);
 	if(out2==NULL){
 		printf("Incorrect format\n");
 		return;
@@ -166,12 +168,11 @@ void piping(char* argv[]){	// function for piping eg a.out| b.out
 		close(1);
 		close(fd[0]);
 		dup(fd[1]);	// fd[1] to std out
-		char *pms[2];
-		pms[0]=(char *)malloc(sizeof(char)*mx);
-		strcpy(pms[0],out1);
-		pms[1]=NULL;
-		execvp(out1,pms);
-		perror("");
+		pms[0]=strtok(out1," ");
+		i=1;
+		while((pms[i++]=strtok(NULL," "))!=NULL);
+		execvp(pms[0],pms);
+		perror("check");
 		exit(0);
 	}
 	else{
@@ -185,11 +186,10 @@ void piping(char* argv[]){	// function for piping eg a.out| b.out
 				close(fd2[0]);
 				dup(fd2[1]);// fd2[1] to stdout
 			}
-			char *pms[2];
-			pms[0]=(char *)malloc(sizeof(char)*mx);
-			strcpy(pms[0],out2);
-			pms[1]=NULL;
-			execvp(out2,pms);
+			pms[0]=strtok(out2," ");
+			i=1;
+			while((pms[i++]=strtok(NULL," "))!=NULL);
+			execvp(pms[0],pms);
 			perror("");
 			exit(0);
 		}
@@ -200,11 +200,10 @@ void piping(char* argv[]){	// function for piping eg a.out| b.out
 					close(0);
 					close(fd2[1]);
 					dup(fd2[0]); // fd2[0] to stdin
-					char *pms[2];
-					pms[0]=(char *)malloc(sizeof(char)*mx);
-					strcpy(pms[0],out3);
-					pms[1]=NULL;
-					execvp(out3,pms);
+					pms[0]=strtok(out3," ");
+					i=1;
+					while((pms[i++]=strtok(NULL," "))!=NULL);
+					execvp(pms[0],pms);
 					perror("");
 					exit(0);		
 				}
