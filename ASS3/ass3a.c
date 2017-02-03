@@ -17,17 +17,12 @@ int semid1, semid2,semid3,semid4;
 int m,n;
 	
 void producer(int *buff){
-	int *in,*out,*SUM;
-	in=&buff[20];
-	out=&buff[21];
-	SUM=&buff[22];
 	int i;
 	for(i=1;i<=50;i++){
 		P(semid3);
-		//P(semid2);
 		buff[buff[20]]=i;
 		buff[20]=(buff[20]+1)%20;
-		//printf("Producer (%d) writes %d\n",getpid(),i);
+		printf("Producer (%d) writes %d\n",getpid(),i);
 		//V(semid1);
 		V(semid4);
 		//V(semid2);
@@ -37,17 +32,15 @@ void producer(int *buff){
 }
 
 void consumer(int *buff){
-	int *in,*out,*SUM;
-	while(1){
-		//P(semid1);
+	while(buff[22]!=m*25*51){
+		P(semid1);
 		P(semid4);
-		if(buff[22]==m*25*51)break;
 		buff[22]=buff[22]+buff[buff[21]];
-		//printf("Consumer (%d) reads %d SUM= %d in=%d  out=%d\n",getpid(),buff[buff[21]],buff[22],buff[20],buff[21]);
+		printf("Consumer (%d) reads %d SUM= %d in=%d  out=%d\n",getpid(),buff[buff[21]],buff[22],buff[20],buff[21]);
 		buff[21]=(buff[21]+1)%20;
-		if(buff[22]==m*25*51)break;
-		//V(semid1);
 		V(semid3);
+		V(semid1);
+		if(buff[22]==m*25*51)exit(1);
 	}
 }
 
@@ -68,7 +61,7 @@ int main(){
 	semid2 = semget(IPC_PRIVATE, 1, 0777|IPC_CREAT);
 	semid3 = semget(IPC_PRIVATE, 1, 0777|IPC_CREAT);
 	semid4 = semget(IPC_PRIVATE, 1, 0777|IPC_CREAT);
-	semctl(semid1,0,SETVAL,0);
+	semctl(semid1,0,SETVAL,1);
 	semctl(semid2,0,SETVAL,1);
 	semctl(semid3,0,SETVAL,20);
 	semctl(semid4,0,SETVAL,0);
