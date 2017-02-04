@@ -96,7 +96,7 @@ main()
 		   will be using it
 		 */
 
-		shmctl(shmid, IPC_RMID, 0);
+		
 	}
 }
 

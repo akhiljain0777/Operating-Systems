@@ -17,41 +17,40 @@ int semid1, semid2,semid3,semid4;
 int m,n;
 	
 void producer(int *buff){
-	int *in,*out,*SUM;
-	in=&buff[20];
-	out=&buff[21];
-	SUM=&buff[22];
 	int i;
 	for(i=1;i<=50;i++){
-		P(semid3);
-		P(semid2);
+		P(semid3);		// check if buffer is full
+		P(semid2);		// producer critical section
 		buff[buff[20]]=i;
 		buff[24]+=i;
 		buff[20]=(buff[20]+1)%20;
-		V(semid2);
+		V(semid2);		
 		printf("Producer (%d) writes %d\n",getpid(),i);
-		V(semid4);
+		V(semid4); // consumer can read the data
 	}
 	return;
 }
 
 void consumer(int *buff){
-	while(buff[22]!=m*25*51){
-		P(semid1);
-		P(semid4);
-		if(buff[22]!=m*25*51)buff[22]=buff[22]+buff[buff[21]];
-		printf("Consumer (%d) reads %d SUM= %d in=%d  out=%d\n",getpid(),buff[buff[21]],buff[22],buff[20],buff[21]);
-		buff[21]=(buff[21]+1)%20;
+	while(buff[22]!=m*25*51){	//condition for sum
+		P(semid1);		// consumer critical section
+		P(semid4);		//if buffer is empty 		
+		if(buff[22]!=m*25*51){
+			buff[22]=buff[22]+buff[buff[21]];
+			printf("Consumer (%d) reads %d \n",getpid(),buff[buff[21]]);
+			buff[21]=(buff[21]+1)%20;
+		}
 		V(semid1);
 		V(semid3);
 		if(buff[22]>=m*25*51)break;
 	}
+	V(semid4);
 	exit(1);
 }
 
 int main(){
 	int shmid,id;
-	int *SUM,*buff,*in,*out;
+	int *SUM,*buff;
 	scanf("%d %d",&m,&n);
 	shmid=shmget(IPC_PRIVATE,30*sizeof(int),0777|IPC_CREAT);
 	buff=(int *)shmat(shmid,NULL,0);
@@ -73,8 +72,6 @@ int main(){
 
 	id=fork();
 	if(id==0){
-		buff[23]=0;
-		buff[24]=0;
 		int id2;
 		int k=m;
 		while(k--){
@@ -97,10 +94,16 @@ int main(){
 				exit(1);
 			}
 		}
-		wait(NULL);
-		while(--n){V(semid4);wait(NULL);}
-		
-		
+		while(n--)wait(NULL);
+		SUM=&buff[22];
+		printf("SUM=%d\n",*SUM);
+		shmdt(buff);
+		/* Removing shared memory and semaphores*/
+		semctl(semid1, 0, IPC_RMID, 0);
+		semctl(semid2, 0, IPC_RMID, 0);
+		semctl(semid3, 0, IPC_RMID, 0);
+		semctl(semid4, 0, IPC_RMID, 0);
+		shmctl(shmid, IPC_RMID, 0);
 	}
 	
 	return 0;
