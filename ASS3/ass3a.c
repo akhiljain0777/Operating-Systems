@@ -17,16 +17,20 @@ int semid1, semid2,semid3,semid4;
 int m,n;
 	
 void producer(int *buff){
+	int *in,*out,*SUM;
+	in=&buff[20];
+	out=&buff[21];
+	SUM=&buff[22];
 	int i;
 	for(i=1;i<=50;i++){
 		P(semid3);
+		P(semid2);
 		buff[buff[20]]=i;
+		buff[24]+=i;
 		buff[20]=(buff[20]+1)%20;
+		V(semid2);
 		printf("Producer (%d) writes %d\n",getpid(),i);
-		//V(semid1);
 		V(semid4);
-		//V(semid2);
-		
 	}
 	return;
 }
@@ -35,13 +39,14 @@ void consumer(int *buff){
 	while(buff[22]!=m*25*51){
 		P(semid1);
 		P(semid4);
-		buff[22]=buff[22]+buff[buff[21]];
+		if(buff[22]!=m*25*51)buff[22]=buff[22]+buff[buff[21]];
 		printf("Consumer (%d) reads %d SUM= %d in=%d  out=%d\n",getpid(),buff[buff[21]],buff[22],buff[20],buff[21]);
 		buff[21]=(buff[21]+1)%20;
-		V(semid3);
 		V(semid1);
-		if(buff[22]==m*25*51)exit(1);
+		V(semid3);
+		if(buff[22]>=m*25*51)break;
 	}
+	exit(1);
 }
 
 int main(){
@@ -68,36 +73,35 @@ int main(){
 
 	id=fork();
 	if(id==0){
-		int id;
-		//buff=(int *)shmat(shmid,NULL,0);
-		while(m--){
-			id=fork();
-			if(id==0){
+		buff[23]=0;
+		buff[24]=0;
+		int id2;
+		int k=m;
+		while(k--){
+			id2=fork();
+			if(id2==0){
 				producer(buff);
 				exit(1);
 			}
 
 		}
+		while(m--)wait(NULL);
 	}
 	else{
-		int id;
-		//buff=(int *)shmat(shmid,NULL,0);
-		while(n--){
-			id=fork();
-			if(id==0){
+		int id3;
+		int k=n;
+		while(k--){
+			id3=fork();
+			if(id3==0){
 				consumer(buff);
 				exit(1);
 			}
 		}
-	
 		wait(NULL);
-		//semctl(semid1, 0, IPC_RMID, 0);
-		//semctl(semid2, 0, IPC_RMID, 0);
-		//semctl(semid3, 0, IPC_RMID, 0);
-		//semctl(semid4, 0, IPC_RMID, 0);	
-		//shmctl(shmid, IPC_RMID, 0);
+		while(--n){V(semid4);wait(NULL);}
+		
+		
 	}
-	wait(NULL);
-	if(id)printf("Sum=%d\n",buff[22]);
+	
 	return 0;
 }
