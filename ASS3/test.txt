@@ -1,1 +1,2 @@
-akhil jain 10003 8.920000bhagwat adi 30002 0.020000
+akhil jain 10003 9.92
+bhagwat adi 30002 8.67

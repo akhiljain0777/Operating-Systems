@@ -23,7 +23,7 @@ void search(struct record *records,int size){
 	scanf("%d",&rollno);
 	for(i=0;i<size;i++){
 		if(records[i].roll==rollno){
-			printf("%s %s %d %f\n",records[i].first,records[i].last,records[i].roll,records[i].cgpa);
+			printf("%s %s %d %.2f\n",records[i].first,records[i].last,records[i].roll,records[i].cgpa);
 			break;
 		}
 	}
@@ -38,7 +38,7 @@ void update(struct record *records,int size,int semid1){
 	scanf("%d",&rollno);
 	for(i=0;i<size;i++){
 		if(records[i].roll==rollno){
-			printf("Old CGPA=%f\nEnter new CGPA\n",records[i].cgpa);
+			printf("Old CGPA=%.2f\nEnter new CGPA\n",records[i].cgpa);
 			scanf("%f",&records[i].cgpa);
 			printf("CGPA updated successfully\n");
 			break;

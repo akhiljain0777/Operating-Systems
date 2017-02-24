@@ -21,9 +21,8 @@ struct record{
 void update(char *filename,struct record *records,int size){
 	int i;
 	FILE *file=fopen(filename,"w");
-	printf("size=%d\n",size );
 	for(i=0;i<size;i++){
-		fprintf(file, "%s %s %d %f\n",records[i].first,records[i].last,records[i].roll,records[i].cgpa );
+		fprintf(file, "%s %s %d %0.2f\n",records[i].first,records[i].last,records[i].roll,records[i].cgpa );
 	}
 	fclose(file);
 }
