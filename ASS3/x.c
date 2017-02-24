@@ -23,7 +23,7 @@ void update(char *filename,struct record *records,int size){
 	FILE *file=fopen(filename,"w");
 	printf("size=%d\n",size );
 	for(i=0;i<size;i++){
-		fprintf(file, "%s %s %d %f",records[i].first,records[i].last,records[i].roll,records[i].cgpa );
+		fprintf(file, "%s %s %d %f\n",records[i].first,records[i].last,records[i].roll,records[i].cgpa );
 	}
 	fclose(file);
 }
@@ -38,12 +38,12 @@ int main(int argc,char *argv[]){
 	int shmid,shmid2,i=0;
 	int semid1,semid2,*flag;
 	struct record *records;
-	key_t key=1101,key2=1100;
+	key_t key=1101,key2=1100,key3=1102;
 	shmid=shmget(key,110*sizeof(struct record),0777|IPC_CREAT);
 	records=(struct record *)shmat(shmid,NULL,0);
 	shmid2=shmget(key2,2*sizeof(int),0777|IPC_CREAT);
 	flag=(int *)shmat(shmid2,NULL,0);
-	semid1 = semget(IPC_PRIVATE, 1, 0777|IPC_CREAT);
+	semid1 = semget(key3, 1, 0777|IPC_CREAT);
 	semid2 = semget(IPC_PRIVATE, 1, 0777|IPC_CREAT);
 	semctl(semid1,0,SETVAL,1);
 	semctl(semid2,0,SETVAL,1);
@@ -54,14 +54,15 @@ int main(int argc,char *argv[]){
 	wait_op.sem_flg=signal_op.sem_num=0;
 	signal_op.sem_op=1;
 	i=0;
-	while(fscanf(file,"%s %s %d %f",records[i].first,records[i].second,&records[i].roll,&records[i].cgpa)!=EOF)i++;
+	while(fscanf(file,"%s %s %d %f",records[i].first,records[i].last,&records[i].roll,&records[i].cgpa)!=EOF)i++;
 	flag[1]=i;
 	flag[0]=0;
 	//TODO
 	while(1){
 		sleep(5);
 		P(semid1);
-		update(argv[1],records,flag[1]);
+		if(flag[0])update(argv[1],records,flag[1]);
+		flag[0]=0;
 		V(semid1);
 	}
 	return 0;
