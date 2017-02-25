@@ -50,7 +50,7 @@ int main(int argc,char *argv[]){
 		printf("Invalid input\n" );
 		return 0;
 	}
-	signal(SIGINT, my_handler);
+	signal(SIGINT, my_handler); // ctrl+c will detach and delete shared memory
 	
 	shmid=shmget(key,110*sizeof(struct record),0777|IPC_CREAT);
 	records=(struct record *)shmat(shmid,NULL,0);
@@ -72,7 +72,7 @@ int main(int argc,char *argv[]){
 	shmid3 = shmget(key3,sizeof(int),0777|IPC_CREAT);
 	while(1){
 		sleep(5);
-		P(semid1);
+		P(semid1); // critical section
 		if(flag[0]){update(argv[1],records,flag[1]);}
 		flag[0]=0;
 		V(semid1);

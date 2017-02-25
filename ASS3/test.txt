@@ -1,3 +1,3 @@
-akhil jain 10003 21.00
-bhagwat adi 30002 87.00
-kyu k 1 9.82
+akhil jain 10003 5.89
+bhagwat adi 30002 8.80
+kyu k 1 10.00

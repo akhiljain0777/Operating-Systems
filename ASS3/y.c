@@ -17,7 +17,7 @@ struct record{
 	float cgpa;
 };
 
-void search(struct record *records,int size){
+void search(struct record *records,int size){ // getting a record
 	int rollno,i;
 	printf("Enter roll no\n");
 	scanf("%d",&rollno);
@@ -32,8 +32,8 @@ void search(struct record *records,int size){
 
 
 void update(struct record *records,int size,int semid1,int *flag){
+	// updating gpa for record
 	int rollno,i;
-	//P(semid1);
 	printf("Enter roll no\n");
 	scanf("%d",&rollno);
 	for(i=0;i<size;i++){
@@ -41,7 +41,7 @@ void update(struct record *records,int size,int semid1,int *flag){
 			printf("Old CGPA=%.2f\nEnter new CGPA\n",records[i].cgpa);
 			float tmp;
 			scanf("%f",&tmp);
-			P(semid1);
+			P(semid1);    // critical section
 			records[i].cgpa=tmp;
 			*flag=1;
 			V(semid1);
@@ -65,13 +65,14 @@ void my_handler(){
 int main(){
 	int shmid,i,shmid2,semid1,shmid3;
 	key_t key=1101,key2=1100,key3=3700;
-	signal(SIGINT,my_handler);
+	signal(SIGINT,my_handler); // ctrl+c will first detach shared memory
 	shmid3 = shmget(key3 , sizeof(int) , 0666);
 	while(shmid3 < 0){
 		printf("Waiting for x to start\n");
 		shmid3 = shmget(key3 , sizeof(int) , 0666);
 		sleep(2);
 	}
+
 	shmid=shmget(key,110*sizeof(struct record),0777|IPC_CREAT);
 	records=(struct record *)shmat(shmid,NULL,0);
 	shmid2=shmget(key2,2*sizeof(int),0777|IPC_CREAT);
