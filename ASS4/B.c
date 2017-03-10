@@ -52,11 +52,10 @@ int consumer(){
 	V(semid[0]);
 	V(semid[2]);
 	printf("B reads %d\n",tmp);
-	//V(semid[3]);
 	return tmp;
 }
 
-void my_handler(){
+void my_handler(){ // Signal handler 
 	shmctl(shmid3, IPC_RMID, 0);
 	shmdt(buff);
 	semctl(semid[0], 0, IPC_RMID, 0);
@@ -72,27 +71,31 @@ void my_handler(){
 void* book_ticket(void* p){
 	int x=*((int *)p);
 	pthread_mutex_lock(&mutex);
-	if(global_cnt>=MAX_Threads){
+	/* Block threads which no. of threads started and not finished
+	are greater than max threads allowed */
+	if(global_cnt>=MAX_Threads){ 
 		flag=1;
 		while(global_cnt<=UNBLOCK_Threads){
 			pthread_cond_wait(&cond, &mutex);
 		}
 	}
-	global_cnt++;
+	global_cnt++; // For no. of threads started and not finished
 	if(Ticket-x>=0){
 		Ticket=min(Ticket-x,100);
 		printf("Request fulfilled for x=%d\n",x);
 		pthread_mutex_unlock(&mutex);
 		tmp=1;
 		random_sleep();
-		return ((void *)(&tmp));
+		global_cnt--;
+		return ((void *)(&tmp)); //return 1
 	}
 	else{
 		printf("Request cannot be fulfilled for x=%d\n",x);
 		pthread_mutex_unlock(&mutex);
 		random_sleep();
 		tmp=0;
-		return ((void *)(&tmp));
+		global_cnt--;
+		return ((void *)(&tmp)); //return 0
 	}
 }
 
@@ -104,8 +107,8 @@ int main(){
 	struct val params[100000];
 	shmid1=shmget(ftok("A.c",11),15*sizeof(int),0777|IPC_CREAT);
 	buff=(int *)shmat(shmid1,NULL,0);
-	buff[10]=0;
-	buff[11]=0;
+	buff[10]=0;  //in 
+	buff[11]=0;   // out 
 	
 	signal_op.sem_num=wait_op.sem_num=0;
 	wait_op.sem_op=-1;
@@ -126,21 +129,22 @@ int main(){
 	pthread_mutex_init(&mutex, NULL);
 	pthread_cond_init(&cond, NULL);
 
+	/*A should start after B*/
 	shmid3 = shmget(ftok("A.c",12) , sizeof(int) , 0777 | IPC_CREAT);
 	
 	int i=0;
 	while(1){
-		params[i].x=consumer();
-		pthread_create(&tid[i], NULL, book_ticket, (void *) &params[i]);
+		params[i].x=consumer(); //Get the value requested
+		pthread_create(&tid[i], NULL, book_ticket, (void *) &params[i]); /*Creating the thread*/
 		pthread_mutex_lock(&mutex);
-		global_cnt--;
-		if(flag){
+		if(flag && global_cnt<=UNBLOCK_Threads){  // Unblock the process blocked due to excessive server usage 
 			flag=0;
 			pthread_cond_broadcast(&cond);
 		}
 		pthread_mutex_unlock(&mutex);
 		i++;
 	}
+
 
 	return 0;
 }

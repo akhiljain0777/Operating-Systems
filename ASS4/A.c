@@ -52,7 +52,7 @@ int main(){
 	
 	signal(SIGINT, my_handler); // ctrl+c will detach and delete shared memory
 
-
+	/*Wait for B to initialize all the variables */
 	shmid3 = shmget(ftok("A.c",12) , sizeof(int) , 0777);
 	while(shmid3 < 0){
 		printf("Waiting for B to start\n");
@@ -78,7 +78,7 @@ int main(){
 
 	while(1){
 		shmid3 = shmget(ftok("A.c",12) , sizeof(int) , 0777);
-		if(shmid3<0)exit(0);
+		if(shmid3<0)exit(0);/* If B is terminated, then terminate A*/
 		random_sleep();
 		n=random_number();
 		producer(n);
